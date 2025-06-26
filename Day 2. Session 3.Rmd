@@ -1,0 +1,137 @@
+---
+title: "Day 2. Session 3"
+author: "Hector Najera"
+date: "2025-06-26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+library(tidyr)
+library(descr)
+library(flextable)
+```
+
+```{r}
+health_data<-read_excel("health_dataexample.xlsx")
+```
+
+Let's explore the data
+
+```{r}
+str(health_data)
+```
+
+What are the names of the variables in my data set?
+
+```{r}
+names(health_data)
+```
+
+Exploring the variables
+
+```{r}
+summary(health_data$age)
+```
+
+How would you explore the blood_pressure variable and what can you tell about it?
+
+```{r}
+freq(health_data$sex)
+```
+
+Now let's see the region variable
+
+```{r}
+freq(health_data$region_id)
+```
+
+How would you explore the diagnosis variable and what can you tell about it?
+
+# Data cleaning
+
+```{r echo = TRUE}
+health_data_clean1 <- health_data %>% filter(age >= 0 & age <= 100)
+age_summary <- summary(health_data_clean1$age)
+
+# Convert to data frame
+age_summary_df <- data.frame(
+  Statistic = names(age_summary),
+  Value = as.numeric(age_summary)
+)
+
+# Create flextable
+flextable(age_summary_df) %>%
+  autofit() %>%
+  set_caption("Summary Statistics for Age (Valid Range 0–100)")
+```
+
+As an alternative, the code below recodes implausible values in the `age` variable by replacing them with missing values (`NA`), and then summarises the cleaned variable:
+
+```{r echo = TRUE}
+health_data_clean2 <- health_data %>% mutate(age = ifelse(age < 0 | age > 100, NA, age))
+```
+
+```{r echo = TRUE}
+# Example: median imputation
+median_age <- median(health_data$age[health_data$age >= 0 & health_data$age <= 100], na.rm = TRUE)
+```
+
+```{r}
+health_data_clean3 <- health_data %>%
+  mutate(
+    age = ifelse(age < 0 | age > 100, NA, age),
+    age = ifelse(is.na(age), median_age, age)
+  )
+
+# Summarize the cleaned and imputed age
+age_summary3 <- summary(health_data_clean3$age)
+
+# Convert to data frame
+age_summary3_df <- data.frame(
+  Statistic = names(age_summary3),
+  Value = as.numeric(age_summary3)
+)
+
+# Create flextable
+flextable(age_summary3_df) %>%
+  autofit() %>%
+  set_caption("Summary Statistics for Age (Invalid and Missing Replaced with Median)")
+```
+
+
+#### Resolving coding inconsistencies
+
+This recoding step addresses inconsistencies in how sex is recorded in the dataset. It maps different codes to unified labels:
+
+ - "M" and "1" are recoded as "Male"
+
+- "F" and "2" are recoded as "Female"
+
+- Any other value, including missing or unrecognized entries, is labeled as "Unknown"
+
+The result is stored in a new variable, sex_clean, allowing you to retain the original values for auditing purposes. 
+
+```{r echo = TRUE}
+health_data <- health_data %>%
+  mutate(sex_clean = case_when(
+    sex %in% c("M", "1") ~ "Male",
+    sex %in% c("F", "2") ~ "Female",
+    TRUE ~ "Unknown"
+  ))
+```
+
+```{r}
+sex_table <- as.data.frame(table(health_data$sex_clean))
+colnames(sex_table) <- c("Sex (Cleaned)", "Count")
+
+# Create flextable
+flextable(sex_table) %>%
+  autofit() %>%
+  set_caption("Frequency of Cleaned Sex Categories")
+```

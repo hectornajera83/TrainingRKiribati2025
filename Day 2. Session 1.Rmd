@@ -1,0 +1,87 @@
+---
+title: "Comparison of Base R and Pipeline (%>%)"
+author: "Your Name"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Creating our previous dataset
+
+```{r}
+# Create a simple dataset with id, age, gender, and color
+G <- data.frame(
+  id = c(1:8),
+  age = c(32, 34, 47, 25, 27, 22, 40, 25),
+  gender = c("M", "F", "F", "F", "F", "F", "M", "F"),
+  color = c("Blue", "Green", "Yellow", "Yellow", 
+            "Black", "Pruple", "Red", "Blue")
+)
+
+# View the dataset
+G
+```
+
+# Computing frequencies
+
+```{r}
+table(G$gender)
+```
+
+Computing percentages
+
+```{r}
+library(descr)
+freq_color <- freq(G$color, plot = FALSE)
+```
+
+Showing the results
+
+```{r}
+freq_color
+```
+
+# Advanced tables
+
+Using `flextable()` to create tables with proportions
+
+```{r}
+# Load necessary package
+library(flextable)
+library(dplyr)
+
+# Extract the table part
+table_color_freq <- as.data.frame(freq_color) %>%
+  mutate(color = rownames(.)) %>%
+  select(color, Frequency, Percent) %>%
+  rename(n = Frequency, proportion = Percent)
+
+# Format with flextable
+flextable(table_color_freq) %>%
+  autofit() %>%
+  set_caption("Color Frequency and Proportion (%) - freq() Approach")
+```
+
+Subsetting and other operations
+
+```{r }
+# SELECT VARIABLES: Keep only id, gender, and color
+
+#  Base R approach
+G_selected_base <- G[, c("id", "gender", "color")]
+G_selected_base
+
+# Pipeline (%>%) with dplyr
+G_selected_pipe <- G %>% select(id, gender, color)
+G_selected_pipe
+
+# MEAN AGE BY GENDER
+
+# Base R approach
+aggregate(age ~ gender, data = G, FUN = mean)
+
+# Pipeline (%>%) with dplyr
+G %>%
+  group_by(gender) %>%
+  summarise(mean_age = mean(age))
+```
+
