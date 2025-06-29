@@ -1,0 +1,37 @@
+---
+title: "Combine Excel sheets from the same file"
+output: html_document
+---
+
+```{r, message=FALSE, warning=FALSE}
+# Load necessary packages
+library(dplyr)
+library(readxl)
+
+# Import each Excel file
+data_2019 <- read_excel("data_years.xlsx", sheet = "2019") %>% mutate(year = 2019)
+data_2021 <- read_excel("data_years.xlsx", sheet = "2021") %>% mutate(year = 2021)
+data_2022 <- read_excel("data_years.xlsx", sheet = "2022") %>% mutate(year = 2022)
+
+# Combine the datasets
+combined_data <- bind_rows(data_2019, data_2021, data_2022)
+
+# Compute mean age by year
+mean_age <- combined_data %>%
+  group_by(year) %>%
+  summarise(mean_age = mean(age, na.rm = TRUE))
+
+print(mean_age)
+```
+
+```{r}
+library(flextable)
+flextable(mean_age) %>%
+autofit() %>%
+  set_header_labels(
+    year = "Year",
+    mean_age = "Mean Age"
+  ) %>%
+  theme_booktabs() %>%
+  align(align = "center", part = "all")
+```

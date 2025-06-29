@@ -1,0 +1,27 @@
+---
+title: "Merging file"
+author: "Hector Najera"
+date: "2025-06-29"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(readxl)
+library(dplyr)
+
+# Import the Excel files
+df1 <- read_excel("employees.xlsx")
+df2 <- read_excel("salaries.xlsx")
+
+# Merge the datasets (inner join by ID and Name)
+merged_data <- left_join(df1, df2, by = c("employee_id"))
+
+# Show the merged result
+merged_data
+
+```
+
