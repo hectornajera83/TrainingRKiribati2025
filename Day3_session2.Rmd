@@ -1,0 +1,128 @@
+
+# Day 3- Session 2: Using  HIES 2023
+
+## Part 1: Prepare data for analysis
+
+
+```{r echo=F}
+library(data.table)
+library(haven)
+library(dplyr)
+library(labelled)
+library(descr)
+```
+
+
+### Import data sets
+
+Health data is in stata format 
+
+```{r}
+health <- read_dta("p3_health.dta")
+```
+
+We also are going to need another data set that contains the island group
+```{r}
+cover<- read_dta("Cover.dta")
+```
+
+
+### The nesxt step is to select the variables that we want to use for this exercise, which include
+
+* id = "interview__key","hm_basic__id"
+* sex= sex
+* age= age
+* hypertension= p304__8
+* island group=  island_group
+
+
+### Keep the variables that we need
+
+First we work with the health dataset
+
+```{r}
+H<- health %>% select(interview__key, sex,age, p304__8)
+```
+
+
+```{r}
+I<- cover %>% select(interview__key,island_group)
+```
+
+
+
+### Merge datasets
+Now we need to have all the variables in the same data frame
+```{r}
+HI<-merge(H,I,by=c("interview__key"), sort=F)
+```
+
+
+## Part 2: Let's conduct some basic analysis
+
+### Calculate the median age 
+
+```{r}
+summary(HI$age)
+```
+
+
+### Proportion of male and females
+```{r}
+HI %>%
+  filter(!is.na(sex)) %>%
+  count(sex) %>%
+  mutate(proportion = n / sum(n)*100)
+```
+
+
+### Proportion of people by island 
+```{r}
+
+freq(as_factor(HI$island_group))
+
+HI %>%
+  filter(!is.na(island_group)) %>%
+  count (as_factor(island_group))%>%
+  mutate(proportion = n / sum(n)*100)
+```
+
+
+
+Recode age groups
+
+* Infants (0-4)
+* Children (5-9)
+* Adolescents (10-19)
+* Adults (20-64)"
+* Elderly (65+)
+
+
+```{r}
+HI <- HI %>%
+  mutate(age_group = case_when(
+    age < 5 ~ "Infants (0-4)",
+    age >= 5 & age<= 9 ~ "Children (5-9)",
+    age >= 10 & age <= 19 ~ "Adolescents (10-19)",
+    age>= 20 & age< 65 ~ "Adults (20-64)",
+    age>= 65 ~ "Elderly (65+)"
+  ))
+```
+
+
+Calculate the proportion of people with hypertension 
+
+```{r}
+ HI %>%
+  summarise(prevalence = mean(p304__8, na.rm = TRUE) * 100)
+```
+
+## Advanced users
+
+
+### Crosstabulation between hypertension and sex
+
+```{r}
+crosstab(HI$p304__8, HI$sex,prop.c = T,format="SPSS")
+```
+
