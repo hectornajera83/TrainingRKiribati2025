@@ -1,0 +1,73 @@
+---
+title: "Duplicates"
+author: "Hector Najera"
+date: "2025-06-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# ID Duplicates
+
+```{r}
+library(dplyr)
+
+# Create example data with duplicates
+data <- data.frame(
+  id = c(1, 2, 3, 4, 2, 5, 3),
+  name = c("Ana", "Luis", "Maria", "Jose", "Luis", "Pedro", "Maria"),
+  age = c(25, 30, 28, 40, 30, 35, 28)
+)
+
+print(data)
+```
+
+
+# Detect duplicates based on 'id'
+
+```{r}
+data %>%
+  group_by(id) %>%
+  filter(n() > 1)
+```
+
+# Detect full duplicated rows
+
+```{r}
+data %>%
+  group_by(across(everything())) %>%
+  filter(n() > 1)
+```
+
+# Detect and flag them
+
+```{r}
+data_flagged <- data %>%
+  group_by(name) %>%
+  mutate(dup_name = if_else(n() > 1, 1, 0)) %>%
+  ungroup()
+
+print(data_flagged)
+
+```
+
+# Remove duplicates based on 'id' (keep first)
+
+```{r}
+data_nodup_id <- data %>%
+  distinct(id, .keep_all = TRUE)
+
+print(data_nodup_id)
+```
+
+
+# Remove full duplicated rows (all columns duplicated)
+```{r}
+data_nodup_rows <- data %>%
+  distinct()
+
+print(data_nodup_rows)
+```
+
